@@ -26,6 +26,8 @@ class CalendarPage extends StatefulWidget {
 
 class _CalendarPageState extends State<CalendarPage> {
   DateTime selectedDate = DateTime.now();
+  DateTime currentWeekStartDate =
+      DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
   final DateFormat formatter = DateFormat('MMMM yyyy');
   final CalendarController _calendarController = CalendarController();
 
@@ -46,7 +48,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 initialDisplayDate: selectedDate,
                 dataSource: _getCalendarDataSource(),
                 timeSlotViewSettings: const TimeSlotViewSettings(
-                  startHour: 00,
+                  startHour: 0,
                   endHour: 24,
                   timeIntervalHeight: 60,
                 ),
@@ -92,55 +94,77 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildWeekView() {
-    DateTime startDate = selectedDate.subtract(Duration(days: selectedDate.weekday - 1));
     return SizedBox(
       height: 80,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 7,
-        itemBuilder: (context, index) {
-          DateTime currentDate = startDate.add(Duration(days: index));
-          bool isSelected = currentDate.day == selectedDate.day &&
-              currentDate.month == selectedDate.month &&
-              currentDate.year == selectedDate.year;
-          return GestureDetector(
-            onTap: () {
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_left),
+            onPressed: () {
               setState(() {
-                selectedDate = currentDate;
-                _calendarController.displayDate = selectedDate;
+                currentWeekStartDate = currentWeekStartDate.subtract(const Duration(days: 7));
               });
             },
-            child: SizedBox(
-              width: 60,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    DateFormat.E().format(currentDate).substring(0, 1) == 'S'
-                        ? DateFormat.E().format(currentDate).substring(0, 2)
-                        : DateFormat.E().format(currentDate).substring(0, 1),
-                    style: TextStyle(
-                      color: isSelected ? Colors.black : Colors.black,
+          ),
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: 7,
+              itemBuilder: (context, index) {
+                DateTime currentDate = currentWeekStartDate.add(Duration(days: index));
+                bool isSelected = currentDate.day == selectedDate.day &&
+                    currentDate.month == selectedDate.month &&
+                    currentDate.year == selectedDate.year;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedDate = currentDate;
+                      _calendarController.displayDate = selectedDate;
+                    });
+                  },
+                  child: SizedBox(
+                    width: 60,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          DateFormat.E().format(currentDate).substring(0, 1) == 'S'
+                              ? DateFormat.E().format(currentDate).substring(0, 2)
+                              : DateFormat.E().format(currentDate).substring(0, 1),
+                          style: TextStyle(
+                            color: isSelected ? Colors.black : Colors.black,
+                          ),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isSelected ? Colors.purple : Colors.transparent,
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: Text(
+                            currentDate.day.toString(),
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isSelected ? Colors.purple : Colors.transparent,
-                    ),
-                    padding: const EdgeInsets.all(8),
-                    child: Text(
-                      currentDate.day.toString(),
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
+          ),
+          IconButton(
+            icon: const Icon(Icons.arrow_right),
+            onPressed: () {
+              setState(() {
+                currentWeekStartDate = currentWeekStartDate.add(const Duration(days: 7));
+              });
+            },
+          ),
+        ],
       ),
     );
   }
